@@ -100,11 +100,9 @@ class Parser:
             self.consume("POINT")
             name = self.consume("ID")
 
-            # Skip over any unexpected DOT before LPAREN
             while self.pos < len(self.tokens) and self.tokens[self.pos][0] == "DOT":
                 self.consume("DOT")
 
-            # Check if the next token is LPAREN, otherwise generate random coordinates
             if self.pos < len(self.tokens) and self.tokens[self.pos][0] == "LPAREN":
                 self.consume("LPAREN")
                 x = self.consume("NUMBER")
@@ -112,14 +110,12 @@ class Parser:
                 y = self.consume("NUMBER")
                 self.consume("RPAREN")
             else:
-                # If no LPAREN, generate random coordinates
                 x, y = self.random_coordinates()
 
             point = PointNode(name, x, y)
             self.built_points[name] = point
             points.append(point)
 
-            # Handle possible 'DOT' or 'COMMA' after a point
             if self.pos < len(self.tokens) and self.tokens[self.pos][0] == "DOT":
                 self.consume("DOT")
                 break
@@ -206,7 +202,7 @@ def draw(nodes):
 
 text = """
 Поставити точку A (1,1), точку B (3,1), точку C (3,3), точку D (1,3).
-Поставити точку E(6, 6), точку K(6,7), точку P.
+Поставити точку E(6, 6), точку P, точку K(6,7).
 Побудувати прямокутник A B C D.
 Провести відрізок B, E.
 Побудувати трикутник A K E.
