@@ -10,13 +10,13 @@ class Lexer:
 
     def tokenize(self):
         patterns = [
-            (r"\bПоставити\b", "PLACE"),
-            (r"\bточку\b", "POINT"),
-            (r"\bПобудувати\b", "BUILD"),
-            (r"\bпрямокутник\b", "RECTANGLE"),
-            (r"\bтрикутник\b", "TRIANGLE"),
-            (r"\bПроведіть\b", "CONNECT"),
-            (r"\bвідрізок\b", "LINE"),
+            (r"\bПостав(ити|лено|те)\b", "PLACE"),
+            (r"\bточк(у|а|ою|и)\b", "POINT"),
+            (r"\b(Побуд(увати|уйте|ова))\b", "BUILD"),
+            (r"\bпрямокутн(ик|ика|ику|иком|и)\b", "RECTANGLE"),
+            (r"\bтрикутн(ик|ика|ику|иком|и)\b", "TRIANGLE"),
+            (r"\bПров(ести|едено)\b", "CONNECT"),
+            (r"\bвідріз(ок|ка|ку|ком|ки)\b", "LINE"),
             (r"[A-Z]", "ID"),
             (r"\(", "LPAREN"),
             (r"\)", "RPAREN"),
@@ -24,14 +24,16 @@ class Lexer:
             (r"-?\d+(\.\d+)?", "NUMBER"),
             (r"\.", "DOT"),
         ]
+
         for pattern, token_type in patterns:
             for match in re.finditer(pattern, self.text):
                 self.tokens.append((token_type, match.group(), match.start()))
+
         self.tokens.sort(key=lambda x: x[2])
+
         return [(token_type, value) for token_type, value, _ in self.tokens]
 
 
-# Вузли дерева
 class Node:
     pass
 
@@ -144,7 +146,6 @@ class Parser:
         return nodes
 
 
-# Малювання
 def draw(nodes):
     for node in nodes:
         if isinstance(node, RectangleNode):
@@ -161,16 +162,23 @@ def draw(nodes):
             x = [node.point1.x, node.point2.x]
             y = [node.point1.y, node.point2.y]
             plt.plot(x, y, label="Line")
+
+    for point in nodes:
+        if isinstance(point, PointNode):
+            plt.scatter(point.x, point.y, color='red')
+            plt.text(point.x - 0.08, point.y + 0.1, f'{point.name}', fontsize=12)
+
     plt.legend()
     plt.xlabel("X")
     plt.ylabel("Y")
+    plt.grid(True)
     plt.show()
 
 
 text = """
-Поставити точку A (1,1). Поставити точку B (3,1). Поставити точку C (3,3). Поставити точку D (1,3).
+Поставити точку A (1,1). Поставити точку B (3,1). Поставити точку C (3,3). Поставте точку D (1,3).
 Побудувати прямокутник A B C D.
-Проведіть відрізок A, C.
+Провести відрізок A, C.
 Побудувати трикутник A B C.
 """
 
