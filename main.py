@@ -88,18 +88,26 @@ class Parser:
             f"Expected {token_type}, got {self.tokens[self.pos][0]} at position {self.pos}"
         )
 
-    def parse_point(self):
+    def parse_points(self):
         self.consume("PLACE")
-        self.consume("POINT")
-        name = self.consume("ID")
-        self.consume("LPAREN")
-        x = self.consume("NUMBER")
-        self.consume("COMMA")
-        y = self.consume("NUMBER")
-        self.consume("RPAREN")
-        point = PointNode(name, x, y)
-        self.built_points[name] = point
-        return point
+        points = []
+        while self.pos < len(self.tokens) and self.tokens[self.pos][0] == "POINT":
+            self.consume("POINT")
+            name = self.consume("ID")
+            self.consume("LPAREN")
+            x = self.consume("NUMBER")
+            self.consume("COMMA")
+            y = self.consume("NUMBER")
+            self.consume("RPAREN")
+            point = PointNode(name, x, y)
+            self.built_points[name] = point
+            points.append(point)
+            if self.pos < len(self.tokens) and self.tokens[self.pos][0] == "DOT":
+                self.consume("DOT")
+                break
+            if self.pos < len(self.tokens) and self.tokens[self.pos][0] == "COMMA":
+                self.consume("COMMA")
+        return points
 
     def parse_rectangle(self):
         self.consume("BUILD")
@@ -131,18 +139,21 @@ class Parser:
         nodes = []
         while self.pos < len(self.tokens):
             token_type = self.tokens[self.pos][0]
+
             if token_type == "PLACE":
-                nodes.append(self.parse_point())
+                nodes.extend(self.parse_points())  # Parse multiple points at once
             elif token_type == "BUILD" and self.tokens[self.pos + 1][0] == "RECTANGLE":
                 nodes.append(self.parse_rectangle())
             elif token_type == "BUILD" and self.tokens[self.pos + 1][0] == "TRIANGLE":
                 nodes.append(self.parse_triangle())
             elif token_type == "CONNECT":
                 nodes.append(self.parse_line())
+            elif token_type == "DOT":
+                self.consume("DOT")
+                continue
             else:
                 raise SyntaxError(f"Unexpected token: {token_type}")
-            if self.pos < len(self.tokens) and self.tokens[self.pos][0] == "DOT":
-                self.consume("DOT")
+
         return nodes
 
 
@@ -176,10 +187,11 @@ def draw(nodes):
 
 
 text = """
-Поставити точку A (1,1). Поставити точку B (3,1). Поставити точку C (3,3). Поставте точку D (1,3).
+Поставити точку A (1,1), точку B (3,1), точку C (3,3), точку D (1,3).
+Поставити точку E(6, 6), точку K(6,7).
 Побудувати прямокутник A B C D.
-Провести відрізок A, C.
-Побудувати трикутник A B C.
+Провести відрізок B, E.
+Побудувати трикутник A K E.
 """
 
 lexer = Lexer(text)
