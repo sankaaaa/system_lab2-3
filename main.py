@@ -1,4 +1,5 @@
 import re
+import random
 import matplotlib.pyplot as plt
 
 
@@ -88,20 +89,37 @@ class Parser:
             f"Expected {token_type}, got {self.tokens[self.pos][0]} at position {self.pos}"
         )
 
+    def random_coordinates(self):
+        """Generate random coordinates between -10 and 10."""
+        return random.uniform(-10, 10), random.uniform(-10, 10)
+
     def parse_points(self):
         self.consume("PLACE")
         points = []
         while self.pos < len(self.tokens) and self.tokens[self.pos][0] == "POINT":
             self.consume("POINT")
             name = self.consume("ID")
-            self.consume("LPAREN")
-            x = self.consume("NUMBER")
-            self.consume("COMMA")
-            y = self.consume("NUMBER")
-            self.consume("RPAREN")
+
+            # Skip over any unexpected DOT before LPAREN
+            while self.pos < len(self.tokens) and self.tokens[self.pos][0] == "DOT":
+                self.consume("DOT")
+
+            # Check if the next token is LPAREN, otherwise generate random coordinates
+            if self.pos < len(self.tokens) and self.tokens[self.pos][0] == "LPAREN":
+                self.consume("LPAREN")
+                x = self.consume("NUMBER")
+                self.consume("COMMA")
+                y = self.consume("NUMBER")
+                self.consume("RPAREN")
+            else:
+                # If no LPAREN, generate random coordinates
+                x, y = self.random_coordinates()
+
             point = PointNode(name, x, y)
             self.built_points[name] = point
             points.append(point)
+
+            # Handle possible 'DOT' or 'COMMA' after a point
             if self.pos < len(self.tokens) and self.tokens[self.pos][0] == "DOT":
                 self.consume("DOT")
                 break
@@ -188,14 +206,16 @@ def draw(nodes):
 
 text = """
 Поставити точку A (1,1), точку B (3,1), точку C (3,3), точку D (1,3).
-Поставити точку E(6, 6), точку K(6,7).
+Поставити точку E(6, 6), точку K(6,7), точку P.
 Побудувати прямокутник A B C D.
 Провести відрізок B, E.
 Побудувати трикутник A K E.
+Провести відрізок A, P.
 """
 
 lexer = Lexer(text)
 tokens = lexer.tokenize()
+print(tokens)
 parser = Parser(tokens)
 nodes = parser.parse()
 draw(nodes)
