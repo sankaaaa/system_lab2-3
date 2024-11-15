@@ -93,6 +93,10 @@ class Parser:
         """Generate random coordinates between -10 and 10."""
         return random.uniform(-10, 10), random.uniform(-10, 10)
 
+    def check_collinearity(self, p1, p2, p3):
+        """Check if three points are collinear using the area formula."""
+        return abs(p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y)) == 0
+
     def parse_points(self):
         self.consume("PLACE")
         points = []
@@ -137,7 +141,12 @@ class Parser:
         points = [self.consume("ID") for _ in range(3)]
         if any(name not in self.built_points for name in points):
             raise ValueError(f"One or more points are not defined: {points}")
-        return TriangleNode([self.built_points[name] for name in points])
+
+        p1, p2, p3 = [self.built_points[name] for name in points]
+        if self.check_collinearity(p1, p2, p3):
+            raise ValueError(f"The points {points} are collinear and cannot form a triangle.")
+
+        return TriangleNode([p1, p2, p3])
 
     def parse_line(self):
         self.consume("CONNECT")
@@ -155,7 +164,7 @@ class Parser:
             token_type = self.tokens[self.pos][0]
 
             if token_type == "PLACE":
-                nodes.extend(self.parse_points())  # Parse multiple points at once
+                nodes.extend(self.parse_points())
             elif token_type == "BUILD" and self.tokens[self.pos + 1][0] == "RECTANGLE":
                 nodes.append(self.parse_rectangle())
             elif token_type == "BUILD" and self.tokens[self.pos + 1][0] == "TRIANGLE":
